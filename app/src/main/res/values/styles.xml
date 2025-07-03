@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CustomNavigationBarIndicator" parent="">
+        <item name="android:backgroundTint">#BB86FC</item> <!-- Your desired oval color -->
+        <item name="android:shape">@style/RoundedIndicator</item>
+    </style>
+
+    <style name="RoundedIndicator" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="ShapeAppearance.MyRoundCorners" parent="ShapeAppearance.Material3.Corner.None">
+        <item name="cornerSize">8dp</item>
+    </style>
+
+
+    <style name="ThemeOverlay_App_DatePicker" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="android:windowBackground">@color/primary</item>
+        <item name="colorSurface">@color/primary</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+    </style>
+
+    <style name="ThemeOverlay_App_TimePicker" parent="ThemeOverlay.MaterialComponents.TimePicker">
+        <item name="android:windowBackground">@color/primary</item>
+        <item name="colorSurface">@color/primary</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+    </style>
+</resources>

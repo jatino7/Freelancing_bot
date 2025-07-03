@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context=".ui.home.AddJobFragment">
+
+    <ProgressBar
+        android:id="@+id/pgBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarAdd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="@drawable/back"
+        app:navigationIconTint="@color/white"
+        app:title="Post Job"
+        app:titleTextColor="@color/white" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbarAdd">
+
+        <LinearLayout
+            android:id="@+id/projectForm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/background"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Title -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/titleLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Project Title"
+                app:boxStrokeColor="@color/primary"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.MyRoundCorners">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/titleEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Description -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/descriptionLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Description"
+                app:boxStrokeColor="@color/primary"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.MyRoundCorners">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/descriptionEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:minLines="3" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Cost -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/costLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Cost (in ₹)"
+                app:boxStrokeColor="@color/primary"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.MyRoundCorners">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/costEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Deadline (Date Picker) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/deadlineLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Deadline"
+                app:boxStrokeColor="@color/primary"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.MyRoundCorners">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/deadlineEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawableEnd="@drawable/calendar"
+                    android:focusable="false"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Submit Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/submitBtn"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Post Job"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.MyRoundCorners" />
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

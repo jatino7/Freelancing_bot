@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.o7solutions.freelancing_bot.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.o7solutions.freelancing_bot.ui.dashboard.DashboardFragment"
+        android:label="Proposals"
+        tools:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.o7solutions.freelancing_bot.ui.notifications.NotificationsFragment"
+        android:label="Chats"
+        tools:layout="@layout/fragment_notifications" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/addJobFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.home.AddJobFragment"
+        android:label="Add"
+        tools:layout="@layout/fragment_add_job" />
+    <fragment
+        android:id="@+id/viewJobFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.home.ViewJobFragment"
+        android:label="fragment_view_job"
+        tools:layout="@layout/fragment_view_job" />
+</navigation>
