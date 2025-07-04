@@ -8,6 +8,9 @@ object Constants {
 
     var userKey = "usertype"
 
+    var proposalCol = "freelyProposal"
+    var subProposalCol= "subProposal"
+
 //    val userType = getSharedPreferences("UserPrefs", MODE_PRIVATE)
 //    .getInt("userType", -1)
 //

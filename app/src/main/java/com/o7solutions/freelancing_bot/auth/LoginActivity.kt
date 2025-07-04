@@ -83,31 +83,22 @@ class LoginActivity : AppCompatActivity() {
     }
 
     fun getUserData() {
-
-
         val db = FirebaseFirestore.getInstance()
         db.collection(Constants.userCol).document(auth.currentUser!!.uid)
-            .get().addOnSuccessListener { documentSnapshot ->
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
                 if (documentSnapshot.exists()) {
+                    val roleLong = documentSnapshot.getLong("role")  // returns Long?
+                    val role = roleLong?.toInt() ?: 0  // convert to Int or default to 0
 
-                    val role = documentSnapshot.get("role")
-
-                    if(role == 1) {
-                        val sharedPref = getSharedPreferences(Constants.userKey, MODE_PRIVATE)
-                        sharedPref.edit().putInt("userType",1).apply()
-                    } else {
-                        val sharedPref = getSharedPreferences(Constants.userKey, MODE_PRIVATE)
-                        sharedPref.edit().putInt("userType", 0).apply()
-                    }
-
+                    val sharedPref = getSharedPreferences(Constants.userKey, MODE_PRIVATE)
+                    sharedPref.edit().putInt("userType", role).apply()
 
                     val intent = Intent(this@LoginActivity, MainActivity::class.java)
                     startActivity(intent)
                     finish()
-                } else {
-
                 }
             }
-
     }
+
 }

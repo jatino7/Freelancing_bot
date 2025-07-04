@@ -16,7 +16,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/back"
         app:navigationIconTint="@color/white"
-        app:title="Post Job"
+        app:title="View"
         app:titleTextColor="@color/white" />
 
 
@@ -39,7 +39,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="8dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/white"
             app:strokeColor="@color/primary"
@@ -192,6 +192,15 @@
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/send_proposal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cornerRadius="8dp"
+            android:text="Send Proposal"
+            />
 
     </LinearLayout>
 

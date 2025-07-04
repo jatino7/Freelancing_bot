@@ -17,6 +17,7 @@ import com.o7solutions.freelancing_bot.adapters.HomeAdapter
 import com.o7solutions.freelancing_bot.data_classes.job
 import com.o7solutions.freelancing_bot.databinding.FragmentHomeBinding
 import com.o7solutions.freelancing_bot.utils.Constants
+import com.o7solutions.freelancing_bot.utils.Functions
 
 class HomeFragment : Fragment(), HomeAdapter.ItemClick {
 
@@ -58,6 +59,10 @@ class HomeFragment : Fragment(), HomeAdapter.ItemClick {
                 binding.fabAdd.visibility = View.VISIBLE
             } else if (userType == 1) {
                 binding.fabAdd.visibility = View.GONE
+            }
+
+            binding.fabPerson.setOnClickListener {
+                Functions.showAlert("This is person fab button",requireContext())
             }
 
 

@@ -7,6 +7,7 @@ data class job(
     val cost: String,
     val deadline: String,
     val timestamp: Long,
+    var status: Int = 0
 ) {
-    constructor(): this("","","","","",0)
+    constructor(): this("","","","","",0,0)
 }

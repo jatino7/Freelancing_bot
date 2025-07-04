@@ -1,12 +1,23 @@
 package com.o7solutions.freelancing_bot.ui.home
 
+import android.app.AlertDialog
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.o7solutions.freelancing_bot.R
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.navigation.fragment.findNavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.o7solutions.freelancing_bot.data_classes.Proposal
 import com.o7solutions.freelancing_bot.databinding.FragmentViewJobBinding
+import com.o7solutions.freelancing_bot.utils.Constants
 import com.o7solutions.freelancing_bot.utils.Functions
 
 // TODO: Rename parameter arguments, choose names that match
@@ -24,6 +35,10 @@ class ViewJobFragment : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
     private lateinit var binding: FragmentViewJobBinding
+    private lateinit var db : FirebaseFirestore
+    private var auth = FirebaseAuth.getInstance()
+    var userId = ""
+    var title = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,11 +64,16 @@ class ViewJobFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val title = arguments?.getString("title") ?: ""
+        db = FirebaseFirestore.getInstance()
+
+        binding.toolbarView.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
+        title = arguments?.getString("title") ?: ""
         val description = arguments?.getString("description") ?: ""
         val cost = arguments?.getString("cost") ?: ""
         val deadline = arguments?.getString("deadline") ?: ""
-        val userId = arguments?.getString("userId") ?: ""
+        userId = arguments?.getString("userId") ?: ""
         val timestamp = arguments?.getLong("timestamp") ?: 0L
 
         // Bind the data to views
@@ -63,6 +83,84 @@ class ViewJobFragment : Fragment() {
         binding.textJobDeadline.text = deadline
         binding.textJobUserId.text = userId
         binding.textJobTimestamp.text = Functions.formatDate(timestamp)
+
+
+        val userType = requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
+            .getInt("userType", -1)
+        Log.d("Home Fragment", userType.toString())
+
+        if (userType == 1) {
+            binding.sendProposal.visibility = View.VISIBLE
+        } else if (userType == 0) {
+            binding.sendProposal.visibility = View.GONE
+        }
+        binding.sendProposal.setOnClickListener {
+
+            showAlertForProposal(requireContext())
+        }
+
+
+
+    }
+
+
+
+    private fun showAlertForProposal(context: Context) {
+        val builder = AlertDialog.Builder(context)
+
+        // Set the title of the dialog
+        builder.setTitle("Enter Your Message")
+
+        // Create a LinearLayout to hold the EditText (optional, but good for padding)
+        val container = LinearLayout(context)
+        container.orientation = LinearLayout.VERTICAL
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+
+        container.layoutParams = params
+
+        val input = EditText(context)
+        input.hint = "Type your message here..."
+        input.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        container.addView(input)
+
+        builder.setView(container)
+
+        builder.setPositiveButton("Send") { dialog, which ->
+            val message = input.text.toString()
+            if (message.isNotBlank()) {
+
+                val proposalData = Proposal(auth.currentUser!!.email.toString(),message, System.currentTimeMillis(), forJob = title )
+
+                db.collection(Constants.proposalCol).document(userId)
+                    .collection(userId).document().set(proposalData)
+                    .addOnSuccessListener {
+                        Toast.makeText(requireContext(), "Data added successfully!", Toast.LENGTH_SHORT).show()
+                        findNavController().popBackStack()
+                    }
+                    .addOnFailureListener { e->
+                        Functions.showAlert("Unable to send proposal: $e",requireContext())
+                    }
+
+            } else {
+                Toast.makeText(context, "Message is empty!", Toast.LENGTH_SHORT).show()
+            }
+            dialog.dismiss() // Dismiss the dialog after action
+        }
+
+        // Set the negative button (Cancel)
+        builder.setNegativeButton("Cancel") { dialog, which ->
+            Toast.makeText(context, "Operation Cancelled", Toast.LENGTH_SHORT).show()
+            dialog.cancel() // Dismiss the dialog
+        }
+
+        val dialog = builder.create()
+        dialog.show()
     }
 
 
