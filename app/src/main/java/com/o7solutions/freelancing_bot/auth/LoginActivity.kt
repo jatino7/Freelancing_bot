@@ -2,6 +2,7 @@ package com.o7solutions.freelancing_bot.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +14,7 @@ import com.o7solutions.freelancing_bot.MainActivity
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.databinding.ActivityLoginBinding
 import com.o7solutions.freelancing_bot.utils.Constants
+import com.o7solutions.freelancing_bot.utils.Functions
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -66,12 +68,6 @@ class LoginActivity : AppCompatActivity() {
                         ).show()
                     }
                         .addOnSuccessListener {
-                            binding.pgBar.visibility = View.GONE
-                            Toast.makeText(
-                                this@LoginActivity,
-                                "Login Successful!",
-                                Toast.LENGTH_SHORT
-                            ).show()
 
                             getUserData()
 
@@ -84,21 +80,34 @@ class LoginActivity : AppCompatActivity() {
 
     fun getUserData() {
         val db = FirebaseFirestore.getInstance()
-        db.collection(Constants.userCol).document(auth.currentUser!!.uid)
+        db.collection(Constants.userCol).document(auth.currentUser!!.email.toString())
             .get()
             .addOnSuccessListener { documentSnapshot ->
                 if (documentSnapshot.exists()) {
                     val roleLong = documentSnapshot.getLong("role")  // returns Long?
                     val role = roleLong?.toInt() ?: 0  // convert to Int or default to 0
 
+                    Log.e("Role on login screen",role.toString())
                     val sharedPref = getSharedPreferences(Constants.userKey, MODE_PRIVATE)
                     sharedPref.edit().putInt("userType", role).apply()
+
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Login Successful!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    binding.pgBar.visibility = View.GONE
 
                     val intent = Intent(this@LoginActivity, MainActivity::class.java)
                     startActivity(intent)
                     finish()
                 }
             }
+            .addOnFailureListener{ e->
+                binding.pgBar.visibility = View.GONE
+                Functions.showAlert(e.localizedMessage.toString(),this)
+            }
+
     }
 
 }

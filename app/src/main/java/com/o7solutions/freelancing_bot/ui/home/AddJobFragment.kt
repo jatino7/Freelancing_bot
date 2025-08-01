@@ -118,7 +118,7 @@ class AddJobFragment : Fragment() {
         val builder = MaterialDatePicker.Builder.datePicker()
             .setTitleText("Select Date")
 
-        builder.setTheme(R.style.ThemeOverlay_App_DatePicker)
+//        builder.setTheme(R.style.ThemeOverlay_App_DatePicker)
 
         val datePicker = builder.build()
 

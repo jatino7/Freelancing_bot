@@ -1,0 +1,45 @@
+<com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/primary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="Home" />
+
+    <ProgressBar
+        android:id="@+id/pgBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:visibility="gone"
+        />
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                app:layout_constraintTop_toBottomOf="@id/toolbar"
+                app:layout_constraintBottom_toBottomOf="parent"
+                >
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    />
+
+            </LinearLayout>
+
+              private fun showProgressBar() {
+                    isLoading = !isLoading
+                    if(isLoading) {
+                        binding.pgBar.visibility = View.VISIBLE
+                    } else {
+                        binding.pgBar.visibility = View.GONE
+
+                    }
+
+                }

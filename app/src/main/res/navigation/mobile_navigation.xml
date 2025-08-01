@@ -37,4 +37,12 @@
         android:name="com.o7solutions.freelancing_bot.ui.home.ViewJobFragment"
         android:label="fragment_view_job"
         tools:layout="@layout/fragment_view_job" />
+    <fragment
+        android:id="@+id/userProfileFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.UserProfileFragment"
+        android:label="UserProfileFragment" />
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.notifications.ChatFragment"
+        android:label="ChatFragment" />
 </navigation>

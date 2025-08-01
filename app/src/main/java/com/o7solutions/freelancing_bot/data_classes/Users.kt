@@ -6,7 +6,14 @@ data class Users(
     val role: Int,
     val email: String,
     val description: String,
+    var experience: ArrayList<Experience>
 ) {
 
-    constructor(): this("","",0,"","")
+    constructor(): this("","",0,"","", ArrayList())
 }
+
+data class Experience(
+    var id: Long ?= 0,
+    var title: String ?= null,
+    var description: String ?= null
+)

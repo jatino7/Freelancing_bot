@@ -28,17 +28,6 @@
         android:visibility="gone"
         />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabPerson"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_margin="8dp"
-        android:src="@drawable/profile"
-        app:tint="@color/white"
-        android:backgroundTint="@color/accent"
-        />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"

@@ -7,30 +7,27 @@
     android:background="@color/background"
     tools:context=".ui.profile.ProfileFragment">
 
-    <ProgressBar
-        android:id="@+id/pgBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:visibility="gone"
-        />
 
-
-
-    <Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarProfile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:title="Profile"
-        android:titleTextColor="@color/white"
+        app:titleTextColor="@color/white"
         android:background="@color/primary"
+        app:title="Profile"
         app:layout_constraintTop_toTopOf="parent"
         />
 
-    <ScrollView
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbarProfile"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="0dp">
+
+
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/toolbarProfile"
@@ -40,7 +37,8 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:gravity="center"
-            android:padding="8dp"
+            android:layout_margin="16dp"
+
             android:layout_marginTop="100dp"
             android:orientation="vertical"
             app:layout_constraintTop_toBottomOf="@id/toolbarProfile"
@@ -66,6 +64,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 app:cardBackgroundColor="@color/white"
+                app:cardElevation="4dp"
                 android:layout_height="wrap_content">
                 <TextView
                     android:id="@+id/descriptionTV"
@@ -75,14 +74,79 @@
                     android:padding="8dp"
                     />
             </com.google.android.material.card.MaterialCardView>
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/logOutBtn"
-                app:cornerRadius="8dp"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Log out"
-                />
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                >
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/logOutBtn"
+                    app:cornerRadius="8dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    app:icon="@drawable/back"
+                    android:layout_marginEnd="4dp"
+                    android:text="Log out"
+                    />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/addExp"
+                    app:cornerRadius="8dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    app:icon="@drawable/add"
+                    android:layout_weight="1"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:text="Add Experience"
+                    />
+
+            </LinearLayout>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12sp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/white"
+                >
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    >
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        />
+
+                    <TextView
+                        android:id="@+id/replaceText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="No experience added yet"
+                        android:textAlignment="center"
+                        android:layout_margin="12dp"
+                        />
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    <ProgressBar
+        android:id="@+id/pgBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:visibility="gone"
+        />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

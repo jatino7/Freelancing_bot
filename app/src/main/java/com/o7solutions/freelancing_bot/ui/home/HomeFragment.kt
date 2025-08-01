@@ -21,7 +21,7 @@ import com.o7solutions.freelancing_bot.utils.Functions
 
 class HomeFragment : Fragment(), HomeAdapter.ItemClick {
 
-    private var _binding: FragmentHomeBinding? = null
+    private lateinit var binding: FragmentHomeBinding
     var loading = false
     private var db = FirebaseFirestore.getInstance()
     private var dataList: ArrayList<job> = ArrayList()
@@ -29,14 +29,13 @@ class HomeFragment : Fragment(), HomeAdapter.ItemClick {
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         return root
@@ -60,10 +59,10 @@ class HomeFragment : Fragment(), HomeAdapter.ItemClick {
             } else if (userType == 1) {
                 binding.fabAdd.visibility = View.GONE
             }
-
-            binding.fabPerson.setOnClickListener {
-                Functions.showAlert("This is person fab button",requireContext())
-            }
+//
+//            binding.fabPerson.setOnClickListener {
+//                Functions.showAlert("This is person fab button",requireContext())
+//            }
 
 
             binding.apply {
@@ -88,19 +87,20 @@ class HomeFragment : Fragment(), HomeAdapter.ItemClick {
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 
     fun showProgressBar() {
         loading = !loading
 
-        if (loading) {
-            binding.pgBar.visibility = View.VISIBLE
-        } else {
-            binding.pgBar.visibility = View.GONE
 
+        if (binding != null) {
+
+
+            if (loading) {
+                binding.pgBar.visibility = View.VISIBLE
+            } else {
+                binding.pgBar.visibility = View.GONE
+
+            }
         }
     }
 
@@ -108,6 +108,7 @@ class HomeFragment : Fragment(), HomeAdapter.ItemClick {
 
 
         showProgressBar()
+        dataList.clear()
         db.collection(Constants.jobCol)
             .addSnapshotListener { value, error ->
                 if (error != null) {
@@ -141,6 +142,6 @@ class HomeFragment : Fragment(), HomeAdapter.ItemClick {
             putString("userId", job.userId)
             putLong("timestamp", job.timestamp)
         }
-        findNavController().navigate(R.id.viewJobFragment,bundle)
+        findNavController().navigate(R.id.viewJobFragment, bundle)
     }
 }

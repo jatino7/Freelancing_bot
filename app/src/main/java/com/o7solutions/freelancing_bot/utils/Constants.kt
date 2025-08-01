@@ -11,6 +11,11 @@ object Constants {
     var proposalCol = "freelyProposal"
     var subProposalCol= "subProposal"
 
+    var recMes = "freelyRecentMessage"
+    var msg = "freelyMessages"
+
+
+    var chatPersonKey = "chatPartnerId"
 //    val userType = getSharedPreferences("UserPrefs", MODE_PRIVATE)
 //    .getInt("userType", -1)
 //

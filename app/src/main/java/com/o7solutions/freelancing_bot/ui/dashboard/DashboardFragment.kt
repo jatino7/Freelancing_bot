@@ -5,11 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.adapters.ProposalAdapter
 import com.o7solutions.freelancing_bot.data_classes.Proposal
 import com.o7solutions.freelancing_bot.databinding.FragmentDashboardBinding
@@ -17,7 +20,7 @@ import com.o7solutions.freelancing_bot.utils.Constants
 import com.o7solutions.freelancing_bot.utils.Functions
 import com.o7solutions.freelancing_bot.utils.Functions.setupToolbarWithPop
 
-class DashboardFragment : Fragment() {
+class DashboardFragment : Fragment(), ProposalAdapter.OnClick {
 
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var db : FirebaseFirestore
@@ -48,7 +51,7 @@ class DashboardFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
 
-        adapter = ProposalAdapter(list)
+        adapter = ProposalAdapter(list,this)
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter
 
@@ -89,6 +92,17 @@ class DashboardFragment : Fragment() {
                     }
                 }
             }
+    }
+
+    override fun visit(position: Int) {
+
+
+        val bundle = Bundle().apply {
+            putString("email",list[position].userId)
+        }
+
+        findNavController().navigate(R.id.userProfileFragment,bundle)
+
     }
 
 

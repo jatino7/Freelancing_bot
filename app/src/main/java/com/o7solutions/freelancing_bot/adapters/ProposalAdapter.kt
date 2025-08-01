@@ -8,11 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.data_classes.Proposal
 import com.o7solutions.freelancing_bot.utils.Functions
-import org.w3c.dom.Text
-import java.text.SimpleDateFormat
 import java.util.*
 
-class ProposalAdapter(private val list: ArrayList<Proposal>) :
+class ProposalAdapter(private val list: ArrayList<Proposal>,val onClick: OnClick) :
     RecyclerView.Adapter<ProposalAdapter.ProposalViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProposalViewHolder {
@@ -27,6 +25,10 @@ class ProposalAdapter(private val list: ArrayList<Proposal>) :
           time?.text = Functions.formatDateTime(list[position].timestamp)
           userName?.text = list[position].userId
           forJob?.text = "For:${list[position].forJob}"
+
+          itemView.setOnClickListener {
+              onClick.visit(position)
+          }
       }
     }
 
@@ -39,5 +41,10 @@ class ProposalAdapter(private val list: ArrayList<Proposal>) :
         var forJob : TextView? = itemView.findViewById<TextView>(R.id.tvFor)
 
 
+    }
+
+    interface OnClick {
+
+        fun visit(position: Int)
     }
 }

@@ -114,11 +114,12 @@ class SignupActivity : AppCompatActivity() {
                     name = name,
                     email = email,
                     role = role,
-                    description = description
+                    description = description,
+                    experience = ArrayList()
                 )
 
                 // Save user data to Firestore
-                db.collection(Constants.userCol).document(uid)
+                db.collection(Constants.userCol).document(email)
                     .set(newUser)
                     .addOnSuccessListener {
                         Toast.makeText(this, "User registered successfully", Toast.LENGTH_SHORT).show()

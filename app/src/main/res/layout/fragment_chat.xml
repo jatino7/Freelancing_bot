@@ -6,9 +6,21 @@
     android:orientation="vertical"
     android:background="@color/background">
 
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/primary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="Chat"
+        app:navigationIcon="@drawable/back"
+        app:navigationIconTint="@color/white"
+        app:titleTextColor="@color/white"/>
+
     <!-- RecyclerView for messages -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/chatRecyclerView"
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
