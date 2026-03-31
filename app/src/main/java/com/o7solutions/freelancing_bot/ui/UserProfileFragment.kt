@@ -1,155 +1,163 @@
 package com.o7solutions.freelancing_bot.ui
 
+import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.*
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.adapters.ExperienceAdapter
 import com.o7solutions.freelancing_bot.data_classes.Experience
 import com.o7solutions.freelancing_bot.databinding.FragmentUserProfileBinding
 import com.o7solutions.freelancing_bot.utils.Constants
+import java.net.URL
+import java.util.concurrent.Executors
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [UserProfileFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class UserProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-    private lateinit var db: FirebaseFirestore
+
+    private lateinit var db: DatabaseReference
     private lateinit var auth: FirebaseAuth
     private lateinit var experienceAdapter: ExperienceAdapter
     private var experienceList = arrayListOf<Experience>()
     private lateinit var binding: FragmentUserProfileBinding
-    var email = ""
+    private var userId = ""
+    private var resumeUrl: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-            email = it.getString("email").toString()
+            userId = it.getString("userId").toString()
         }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-
-        binding = FragmentUserProfileBinding.inflate(layoutInflater)
+    ): View {
+        binding = FragmentUserProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        db = FirebaseFirestore.getInstance()
+        db = FirebaseDatabase.getInstance().getReference(Constants.userCol)
         auth = FirebaseAuth.getInstance()
 
         binding.toolbar.setNavigationOnClickListener {
             findNavController().popBackStack()
         }
-        binding.message.setOnClickListener {
-            val bundle = Bundle().apply {
-                putString(Constants.chatPersonKey,binding.tvEmail.text.toString())
-            }
 
-            findNavController().navigate(R.id.chatFragment,bundle)
+        // 1. Message/Chat Click
+        binding.message.setOnClickListener {
+            val contactEmail = binding.tvEmail.text.toString()
+            if (contactEmail.isNotEmpty()) {
+                val bundle = Bundle().apply {
+                    putString(Constants.chatPersonKey, contactEmail)
+                }
+                findNavController().navigate(R.id.chatFragment, bundle)
+            }
         }
 
-        val swipeRefresh = view.findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
-        val tvName = view.findViewById<TextView>(R.id.tvName)
-        val tvEmail = view.findViewById<TextView>(R.id.tvEmail)
-        val tvDescription = view.findViewById<TextView>(R.id.tvDescription)
-        val recyclerView = view.findViewById<RecyclerView>(R.id.experienceRecyclerView)
+        // 2. View Resume / PAN Card Click (Optimized for PDF visibility)
+        binding.btnViewResume.setOnClickListener {
+            if (!resumeUrl.isNullOrEmpty()) {
+                try {
+                    // Using Google Docs Viewer to ensure PDF is rendered in browser
+                    val viewerUrl = "https://docs.google.com/viewer?url=$resumeUrl"
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(viewerUrl))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // Fallback to direct URL if viewer fails
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(resumeUrl))
+                    startActivity(intent)
+                }
+            } else {
+                Toast.makeText(requireContext(), "No document available", Toast.LENGTH_SHORT).show()
+            }
+        }
 
-        experienceAdapter = ExperienceAdapter(experienceList,this)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = experienceAdapter
+        experienceAdapter = ExperienceAdapter(experienceList, this)
+        binding.experienceRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.experienceRecyclerView.adapter = experienceAdapter
 
-        swipeRefresh.setOnRefreshListener {
+        binding.swipeRefresh.setOnRefreshListener {
             loadData()
         }
 
-        swipeRefresh.isRefreshing = true
         loadData()
-
     }
 
-    fun loadData() {
+    private fun loadData() {
+        if (userId.isEmpty()) return
+        binding.swipeRefresh.isRefreshing = true
 
-        binding.apply {
+        db.child(userId).get().addOnSuccessListener { snapshot ->
+            if (snapshot.exists()) {
+                binding.apply {
+                    tvName.text = snapshot.child("name").value?.toString() ?: "N/A"
+                    tvEmail.text = snapshot.child("email").value?.toString() ?: ""
+                    tvHeadline.text = snapshot.child("headline").value?.toString() ?: "Professional"
+                    tvAbout.text = snapshot.child("about").value?.toString() ?: "No bio provided."
 
+                    // Get Document URL (Check both 'resumeUrl' or 'panCardUrl' if applicable)
+                    resumeUrl = snapshot.child("resumeUrl").value?.toString()
 
-        db.collection(Constants.userCol).document(email)
-            .get().addOnSuccessListener { doc ->
+                    // Load Profile Image without Glide
+                    val imageUrl = snapshot.child("profileImageUrl").value?.toString()
+                    if (!imageUrl.isNullOrEmpty()) {
+                        loadImageFromUrl(imageUrl)
+                    } else {
+                        ivProfile.setImageResource(R.drawable.profile3d)
+                    }
 
-                Log.e("user profile", "under documnet")
-                tvName.text = doc.getString("name")
-                tvEmail.text = doc.getString("email")
-                tvDescription.text = doc.getString("description")
-
-                Log.e("user profile",tvEmail.text.toString())
-                val expData = doc.get("experience") as? List<Map<String, Any>>
-                experienceList.clear()
-                expData?.forEach {
-                    val exp = Experience(
-                        id = (it["id"] as? Number)?.toLong(),
-                        title = it["title"] as? String,
-                        description = it["description"] as? String
-                    )
-                    experienceList.add(exp)
+                    // Process Experience
+                    experienceList.clear()
+                    snapshot.child("experience").children.forEach { child ->
+                        val exp = child.getValue(Experience::class.java)
+                        exp?.let { experienceList.add(it) }
+                    }
+                    experienceAdapter.notifyDataSetChanged()
                 }
+            }
+            binding.swipeRefresh.isRefreshing = false
+        }.addOnFailureListener {
+            binding.swipeRefresh.isRefreshing = false
+            Toast.makeText(requireContext(), "Error loading profile", Toast.LENGTH_SHORT).show()
+        }
+    }
 
-                if (experienceList.isEmpty()) {
-                    Toast.makeText(requireContext(), "No experience added by user yet!", Toast.LENGTH_SHORT).show()
+    private fun loadImageFromUrl(url: String) {
+        val executor = Executors.newSingleThreadExecutor()
+        val handler = Handler(Looper.getMainLooper())
+
+        executor.execute {
+            try {
+                val inputStream = URL(url).openStream()
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+
+                handler.post {
+                    if (isAdded) { // Safety check to ensure fragment is still attached
+                        binding.ivProfile.setImageBitmap(bitmap)
+                    }
                 }
-                experienceAdapter.notifyDataSetChanged()
-                swipeRefresh.isRefreshing = false
-            }.addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
-                swipeRefresh.isRefreshing = false
+            } catch (e: Exception) {
+                Log.e("UserProfile", "Image load failed: ${e.message}")
             }
         }
     }
 
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment UserProfileFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            UserProfileFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
-    }
+    override fun onItemClick(position: Int) {}
+    override fun onDeleteClick(position: Int) {}
 }

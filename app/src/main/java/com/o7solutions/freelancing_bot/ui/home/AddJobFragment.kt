@@ -2,155 +2,94 @@ package com.o7solutions.freelancing_bot.ui.home
 
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.o7solutions.freelancing_bot.R
+import com.google.firebase.database.FirebaseDatabase
 import com.o7solutions.freelancing_bot.data_classes.job
 import com.o7solutions.freelancing_bot.databinding.FragmentAddJobBinding
 import com.o7solutions.freelancing_bot.utils.Constants
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
-import java.util.TimeZone
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [AddJobFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class AddJobFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-    private lateinit var binding: FragmentAddJobBinding
-    private lateinit var db: FirebaseFirestore
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var binding: FragmentAddJobBinding
+    private val auth = FirebaseAuth.getInstance()
+    private val dbRef = FirebaseDatabase.getInstance().getReference(Constants.jobCol)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentAddJobBinding.inflate(layoutInflater)
-
+    ): View {
+        binding = FragmentAddJobBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        db = FirebaseFirestore.getInstance()
+        setupJobTypeDropdown()
+
         binding.apply {
-            deadlineEditText.setOnClickListener {
-                showDatePicker()
-            }
+            toolbarAdd.setNavigationOnClickListener { findNavController().popBackStack() }
 
             submitBtn.setOnClickListener {
-                submitJobData()
+                saveJobToDatabase()
             }
+        }
+    }
 
-            toolbarAdd.setNavigationOnClickListener {
+    private fun setupJobTypeDropdown() {
+        val types = listOf("Full-time", "Part-time", "Contract", "Internship", "Remote")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, types)
+        binding.jobTypeAutoComplete.setAdapter(adapter)
+    }
+
+    private fun saveJobToDatabase() {
+        val title = binding.titleEditText.text.toString().trim()
+        val company = binding.companyEditText.text.toString().trim()
+        val location = binding.locationEditText.text.toString().trim()
+        val jobType = binding.jobTypeAutoComplete.text.toString()
+        val salary = binding.salaryEditText.text.toString().trim()
+        val desc = binding.descriptionEditText.text.toString().trim()
+
+        if (title.isEmpty() || company.isEmpty() || location.isEmpty() || jobType.isEmpty() || desc.isEmpty()) {
+            Toast.makeText(requireContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        binding.pgBar.visibility = View.VISIBLE
+
+        // Generate unique ID for the job listing
+        val jobId = dbRef.push().key ?: System.currentTimeMillis().toString()
+
+        val jobData = job(
+            jobId = jobId,
+            posterId = auth.currentUser?.uid ?: "",
+            title = title,
+            companyName = company,
+            location = location,
+            description = desc,
+            jobType = jobType,
+            salaryRange = salary,
+            timestamp = System.currentTimeMillis(),
+            status = 0 // Active
+        )
+
+        dbRef.child(jobId).setValue(jobData)
+            .addOnSuccessListener {
+                binding.pgBar.visibility = View.GONE
+                Toast.makeText(requireContext(), "Job Posted Successfully!", Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
             }
-        }
-    }
-
-
-    private fun submitJobData() {
-        with(binding) {
-            val title = titleEditText.text.toString().trim()
-            val description = descriptionEditText.text.toString().trim()
-            val cost = costEditText.text.toString().trim()
-            val deadlineText = deadlineEditText.text.toString().trim()
-
-            // Basic validation
-            if (title.isEmpty() || description.isEmpty() || cost.isEmpty() || deadlineText.isEmpty()) {
-                Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            val newJob = job(
-                userId = FirebaseAuth.getInstance().currentUser!!.email.toString(),
-                title = title,
-                description = description,
-                cost = cost,
-                deadline = deadlineText.toString(),
-                timestamp = System.currentTimeMillis()
-            )
-
-            pgBar.visibility = View.VISIBLE
-
-            FirebaseFirestore.getInstance().collection(Constants.jobCol)
-                .add(newJob)
-                .addOnSuccessListener {
-                    pgBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Job posted successfully", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { e ->
-                    pgBar.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Error posting job!", Toast.LENGTH_SHORT).show()
-                    Log.e("Add",e.toString())
-                }
-        }
-    }
-
-
-
-    private fun showDatePicker() {
-        val builder = MaterialDatePicker.Builder.datePicker()
-            .setTitleText("Select Date")
-
-//        builder.setTheme(R.style.ThemeOverlay_App_DatePicker)
-
-        val datePicker = builder.build()
-
-        datePicker.addOnPositiveButtonClickListener { selection ->
-
-            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-            calendar.timeInMillis = selection
-            val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            val formattedDate = format.format(calendar.time)
-            binding.deadlineEditText.setText(formattedDate)
-        }
-
-        datePicker.show(childFragmentManager, "DATE_PICKER")
-    }
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AddJobFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AddJobFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+            .addOnFailureListener { e ->
+                binding.pgBar.visibility = View.GONE
+                Log.e("RealtimeDB", "Error: ${e.message}")
+                Toast.makeText(requireContext(), "Failed to post job", Toast.LENGTH_SHORT).show()
             }
     }
 }

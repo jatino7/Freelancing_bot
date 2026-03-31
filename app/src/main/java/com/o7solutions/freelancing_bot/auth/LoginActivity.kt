@@ -9,7 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.DatabaseReference
 import com.o7solutions.freelancing_bot.MainActivity
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.databinding.ActivityLoginBinding
@@ -19,7 +20,7 @@ import com.o7solutions.freelancing_bot.utils.Functions
 class LoginActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var binding: ActivityLoginBinding
-
+    private lateinit var dbRef: DatabaseReference // Added for Realtime Database
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,81 +34,68 @@ class LoginActivity : AppCompatActivity() {
             insets
         }
 
-
         auth = FirebaseAuth.getInstance()
-        binding.apply {
+        // Initialize Realtime Database reference
+        dbRef = FirebaseDatabase.getInstance().getReference(Constants.userCol)
 
+        binding.apply {
             createAccount.setOnClickListener {
-                val intent = Intent(this@LoginActivity, SignupActivity::class.java)
-                startActivity(intent)
+                startActivity(Intent(this@LoginActivity, SignupActivity::class.java))
             }
 
             loginBTN.setOnClickListener {
+                val email = emailET.text.toString().trim()
+                val pass = passET.text.toString().trim()
 
-
-                binding.pgBar.visibility = View.VISIBLE
-                if (emailET.text!!.isEmpty()) {
-                    binding.pgBar.visibility = View.GONE
-
+                if (email.isEmpty()) {
                     emailET.error = "Please enter email"
-                } else if (passET.text!!.isEmpty()) {
-                    binding.pgBar.visibility = View.GONE
-
-                    passET.error = "Please enter password"
-                } else {
-                    val email = emailET.text.toString().trim()
-                    val pass = passET.text.toString().trim()
-
-                    auth.signInWithEmailAndPassword(email, pass).addOnFailureListener { e ->
-                        binding.pgBar.visibility = View.GONE
-
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "Unable to login->${e}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                        .addOnSuccessListener {
-
-                            getUserData()
-
-                        }
+                    return@setOnClickListener
                 }
-            }
+                if (pass.isEmpty()) {
+                    passET.error = "Please enter password"
+                    return@setOnClickListener
+                }
 
+                pgBar.visibility = View.VISIBLE
+
+                auth.signInWithEmailAndPassword(email, pass)
+                    .addOnSuccessListener {
+                        getUserData()
+                    }
+                    .addOnFailureListener { e ->
+                        pgBar.visibility = View.GONE
+                        Toast.makeText(this@LoginActivity, "Login failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
     }
 
-    fun getUserData() {
-        val db = FirebaseFirestore.getInstance()
-        db.collection(Constants.userCol).document(auth.currentUser!!.email.toString())
-            .get()
-            .addOnSuccessListener { documentSnapshot ->
-                if (documentSnapshot.exists()) {
-                    val roleLong = documentSnapshot.getLong("role")  // returns Long?
-                    val role = roleLong?.toInt() ?: 0  // convert to Int or default to 0
+    private fun getUserData() {
+        val uid = auth.currentUser?.uid ?: return
 
-                    Log.e("Role on login screen",role.toString())
-                    val sharedPref = getSharedPreferences(Constants.userKey, MODE_PRIVATE)
-                    sharedPref.edit().putInt("userType", role).apply()
+        // Fetching from Realtime Database using the UID
+        dbRef.child(uid).get().addOnSuccessListener { snapshot ->
+            if (snapshot.exists()) {
+                // Realtime Database returns Long for integers by default
+                val role = snapshot.child("role").getValue(Int::class.java) ?: 0
 
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Login Successful!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    binding.pgBar.visibility = View.GONE
+                Log.e("Role on login screen", role.toString())
 
-                    val intent = Intent(this@LoginActivity, MainActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                }
-            }
-            .addOnFailureListener{ e->
+                val sharedPref = getSharedPreferences(Constants.userKey, MODE_PRIVATE)
+                sharedPref.edit().putInt("userType", role).apply()
+
                 binding.pgBar.visibility = View.GONE
-                Functions.showAlert(e.localizedMessage.toString(),this)
+                Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show()
+
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            } else {
+                binding.pgBar.visibility = View.GONE
+                Toast.makeText(this, "User data not found", Toast.LENGTH_SHORT).show()
             }
-
+        }.addOnFailureListener { e ->
+            binding.pgBar.visibility = View.GONE
+            Functions.showAlert(e.localizedMessage ?: "Unknown error", this)
+        }
     }
-
 }

@@ -45,4 +45,8 @@
         android:id="@+id/chatFragment"
         android:name="com.o7solutions.freelancing_bot.ui.notifications.ChatFragment"
         android:label="ChatFragment" />
+    <fragment
+        android:id="@+id/viewProposalFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.dashboard.ViewProposalFragment"
+        android:label="ViewProposalFragment" />
 </navigation>

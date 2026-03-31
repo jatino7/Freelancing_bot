@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.o7solutions.freelancing_bot"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.o7solutions.freelancing_bot"
@@ -51,11 +51,14 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-
+// Add the dependency for the Realtime Database library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation("com.google.firebase:firebase-database")
 //    firebase
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
     implementation("com.google.firebase:firebase-analytics")
@@ -63,5 +66,5 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx") // For Kotlin, use -ktx for KTX extensions
     // Cloud Firestore
     implementation("com.google.firebase:firebase-firestore-ktx") // For Kotlin
-
+    implementation("io.appwrite:sdk-for-android:5.1.0")
 }

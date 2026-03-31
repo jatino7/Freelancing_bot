@@ -2,145 +2,137 @@ package com.o7solutions.freelancing_bot.ui.home
 
 import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
-import android.util.Log
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.*
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.adapters.HomeAdapter
 import com.o7solutions.freelancing_bot.data_classes.job
 import com.o7solutions.freelancing_bot.databinding.FragmentHomeBinding
 import com.o7solutions.freelancing_bot.utils.Constants
-import com.o7solutions.freelancing_bot.utils.Functions
+import java.util.*
+import kotlin.collections.ArrayList
 
 class HomeFragment : Fragment(), HomeAdapter.ItemClick {
 
     private lateinit var binding: FragmentHomeBinding
-    var loading = false
-    private var db = FirebaseFirestore.getInstance()
-    private var dataList: ArrayList<job> = ArrayList()
+    private var dbRef: DatabaseReference = FirebaseDatabase.getInstance().getReference(Constants.jobCol)
+
+    private var fullList: ArrayList<job> = ArrayList() // Original Data
+    private var filteredList: ArrayList<job> = ArrayList() // Data shown in RV
+
     private lateinit var adapter: HomeAdapter
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentHomeBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-        return root
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupUI()
+        getJobs()
+        setupSearch()
+    }
 
+    private fun setupUI() {
+        val sharedPref = requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
+        val userType = sharedPref.getInt("userType", -1)
 
-        if (binding != null) {
+        binding.fabAdd.visibility = if (userType == 0) View.VISIBLE else View.GONE
 
-
-//        fab visibility
-            val userType = requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
-                .getInt("userType", -1)
-            Log.d("Home Fragment", userType.toString())
-
-            if (userType == 0) {
-                binding.fabAdd.visibility = View.VISIBLE
-            } else if (userType == 1) {
-                binding.fabAdd.visibility = View.GONE
-            }
-//
-//            binding.fabPerson.setOnClickListener {
-//                Functions.showAlert("This is person fab button",requireContext())
-//            }
-
-
-            binding.apply {
-
-
-//            add Job fragment
-                fabAdd.setOnClickListener {
-                    findNavController().navigate(R.id.addJobFragment)
-                }
-
-
-//            adapter
-
-                adapter = HomeAdapter(dataList, this@HomeFragment)
-                recyclerView.layoutManager = LinearLayoutManager(requireContext())
-                recyclerView.adapter = adapter
-
+        binding.apply {
+            fabAdd.setOnClickListener {
+                findNavController().navigate(R.id.addJobFragment)
             }
 
-            getJobs()
-
+            // Adapter uses filteredList
+            adapter = HomeAdapter(filteredList, this@HomeFragment)
+            recyclerView.layoutManager = LinearLayoutManager(requireContext())
+            recyclerView.adapter = adapter
         }
     }
 
-
-    fun showProgressBar() {
-        loading = !loading
-
-
-        if (binding != null) {
-
-
-            if (loading) {
-                binding.pgBar.visibility = View.VISIBLE
-            } else {
-                binding.pgBar.visibility = View.GONE
-
+    private fun setupSearch() {
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                filterJobs(s.toString())
             }
-        }
+            override fun afterTextChanged(s: Editable?) {}
+        })
     }
 
-    fun getJobs() {
+    private fun filterJobs(query: String) {
+        val searchText = query.lowercase(Locale.getDefault())
+        filteredList.clear()
 
-
-        showProgressBar()
-        dataList.clear()
-        db.collection(Constants.jobCol)
-            .addSnapshotListener { value, error ->
-                if (error != null) {
-                    return@addSnapshotListener
-                    showProgressBar()
+        if (searchText.isEmpty()) {
+            filteredList.addAll(fullList)
+        } else {
+            for (item in fullList) {
+                // Search by Job Title OR Company Name
+                if (item.title?.lowercase()?.contains(searchText) == true ||
+                    item.companyName?.lowercase()?.contains(searchText) == true) {
+                    filteredList.add(item)
                 }
+            }
+        }
+        adapter.notifyDataSetChanged()
+    }
 
-                if (value != error) {
-                    for (doc in value) {
-                        val newJob = doc.toObject(job::class.java)
-                        dataList.add(newJob)
+    private fun getJobs() {
+        binding.pgBar.visibility = View.VISIBLE
 
+        dbRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                fullList.clear()
+                if (snapshot.exists()) {
+                    for (jobSnapshot in snapshot.children) {
+                        val item = jobSnapshot.getValue(job::class.java)
+                        item?.let { fullList.add(it) }
                     }
-
-                    adapter.notifyDataSetChanged()
-                    showProgressBar()
+                    fullList.sortByDescending { it.timestamp }
                 }
 
+                // Refresh the search view with new data
+                filterJobs(binding.etSearch.text.toString())
+                binding.pgBar.visibility = View.GONE
             }
+
+            override fun onCancelled(error: DatabaseError) {
+                binding.pgBar.visibility = View.GONE
+                Toast.makeText(requireContext(), error.message, Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     override fun onClicked(position: Int) {
+        // Use filteredList to get the correct job after searching
+        val selectedJob = filteredList[position]
 
         val bundle = Bundle().apply {
-
-            val job = dataList[position]
-            putString("title", job.title)
-            putString("description", job.description)
-            putString("cost", job.cost)
-            putString("deadline", job.deadline)
-            putString("userId", job.userId)
-            putLong("timestamp", job.timestamp)
+            putString("jobId", selectedJob.jobId)
+            putString("title", selectedJob.title)
+            putString("company", selectedJob.companyName)
+            putString("location", selectedJob.location)
+            putString("jobType", selectedJob.jobType)
+            putString("salary", selectedJob.salaryRange)
+            putString("description", selectedJob.description)
+            putString("posterId", selectedJob.posterId)
+            putLong("timestamp", selectedJob.timestamp)
+            putString("posterId",selectedJob.posterId)
         }
         findNavController().navigate(R.id.viewJobFragment, bundle)
     }

@@ -3,107 +3,90 @@ package com.o7solutions.freelancing_bot.ui.profile
 import android.app.AlertDialog
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.*
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.adapters.ExperienceAdapter
 import com.o7solutions.freelancing_bot.auth.LoginActivity
 import com.o7solutions.freelancing_bot.data_classes.Experience
+import com.o7solutions.freelancing_bot.data_classes.User
 import com.o7solutions.freelancing_bot.databinding.FragmentProfileBinding
+import com.o7solutions.freelancing_bot.utils.AppwriteManager
 import com.o7solutions.freelancing_bot.utils.Constants
-import com.o7solutions.freelancing_bot.utils.Functions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
+import java.util.UUID
+import java.util.concurrent.Executors
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [ProfileFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-    private lateinit var binding: FragmentProfileBinding
-    private lateinit var db: FirebaseFirestore
-    private var auth = FirebaseAuth.getInstance()
-    var list = arrayListOf<Experience>()
-    lateinit var adapter: ExperienceAdapter
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+    private lateinit var binding: FragmentProfileBinding
+    private val auth = FirebaseAuth.getInstance()
+    private val dbRef = FirebaseDatabase.getInstance().getReference(Constants.userCol)
+    private lateinit var appwriteManager: AppwriteManager
+
+    private var experienceList = ArrayList<Experience>()
+    private lateinit var adapter: ExperienceAdapter
+    private var currentUser: User? = null
+
+    private val imagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { uploadFile(it, ".jpg", isProfileImage = true) }
+    }
+
+    private val resumePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { uploadFile(it, ".pdf", isProfileImage = false) }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentProfileBinding.inflate(layoutInflater)
+    ): View {
+        binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        appwriteManager = AppwriteManager.getInstance(requireContext())
 
-        binding.pgBar.visibility = View.VISIBLE
-        db = FirebaseFirestore.getInstance()
-
-        adapter = ExperienceAdapter(list,this)
-        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        binding.recyclerView.adapter = adapter
+        setupRecyclerView()
 
         binding.apply {
-
             swipeRefresh.setOnRefreshListener {
                 getUserData()
                 swipeRefresh.isRefreshing = false
             }
 
+            editProfileBtn.setOnClickListener { showEditProfileDialog() }
+            profileIV.setOnClickListener { imagePicker.launch("image/*") }
+            uploadResumeBtn.setOnClickListener { resumePicker.launch("application/pdf") }
 
             addExp.setOnClickListener {
-                showExperienceDialog {exp->
-                    val expMap = mapOf(
-                        "id" to exp.id,
-                        "title" to exp.title,
-                        "description" to exp.description
-                    )
-                    db.collection(Constants.userCol)
-                        .document(auth.currentUser?.email.toString())
-                        .update("experience", FieldValue.arrayUnion(expMap))
-                        .addOnSuccessListener {
-                            Toast.makeText(requireContext(), "Experience added", Toast.LENGTH_SHORT).show()
-                        }
-                        .addOnFailureListener { e->
-                            Functions.showAlert(e.localizedMessage.toString(),requireContext())
-
-                        }
-
-                }
-
+                showExperienceDialog { newExp -> saveExperienceToDb(newExp) }
             }
+
             logOutBtn.setOnClickListener {
                 auth.signOut()
                 requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE).edit().clear().apply()
-
-                val intent = Intent(requireActivity(), LoginActivity::class.java)
-                startActivity(intent)
+                startActivity(Intent(requireActivity(), LoginActivity::class.java))
                 requireActivity().finish()
             }
         }
@@ -111,119 +94,171 @@ class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
         getUserData()
     }
 
+    private fun setupRecyclerView() {
+        adapter = ExperienceAdapter(experienceList, this)
+        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerView.adapter = adapter
+    }
 
+    private fun getUserData() {
+        val uid = auth.currentUser?.uid ?: return
+        binding.pgBar.visibility = View.VISIBLE
 
-    fun getUserData() {
+        dbRef.child(uid).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (!isAdded) return
+                binding.pgBar.visibility = View.GONE
+                currentUser = snapshot.getValue(User::class.java)
 
-        binding.apply {
-            db.collection(Constants.userCol).document(auth.currentUser!!.email.toString())
-                .get().addOnSuccessListener { documentSnapshot ->
-                    if (documentSnapshot.exists()) {
+                currentUser?.let { user ->
+                    binding.nameTV.text = user.name
+                    binding.descriptionTV.text = user.headline.ifEmpty { "Add a headline" }
+                    binding.locationTV.text = user.location.ifEmpty { "Location not set" }
+                    binding.aboutTV.text = user.about.ifEmpty { "No bio added yet." }
 
-                        binding.pgBar.visibility = View.GONE
-
-                        binding.nameTV.text = documentSnapshot.getString("name")
-                        binding.descriptionTV.text = "${documentSnapshot.getString("email")}\n${documentSnapshot.getString("description")}"
-
-                        val experienceList = documentSnapshot.get("experience") as? List<Map<String, Any>>
-                        list.clear()
-
-                        experienceList?.forEach { expMap ->
-                            val experience = Experience(
-                                id = (expMap["id"] as? Number)?.toLong(),
-                                title = expMap["title"] as? String,
-                                description = expMap["description"] as? String
-                            )
-                            list.add(experience)
-                            adapter.notifyDataSetChanged()
-
-                            if(!list.isEmpty()) {
-                                replaceText.visibility = View.GONE
-                            }
-                        }
-
-
-                    } else {
-                        binding.pgBar.visibility = View.GONE
-
-                        binding.nameTV.text = "User data not found"
-                        binding.descriptionTV.text = "User data not found"
-
-
+                    // Manually load image without Glide
+                    if (user.profileImageUrl.isNotEmpty()) {
+                        loadImageFromUrl(user.profileImageUrl, binding.profileIV)
                     }
-                }.addOnFailureListener { exception ->
 
-                    binding.pgBar.visibility = View.GONE
+                    binding.resumeNameTV.text = if (user.resumeUrl.isNotEmpty()) "Resume_Uploaded.pdf" else "No resume uploaded"
 
-                    binding.nameTV.text =" "
-                    binding.descriptionTV.text = "Error: ${exception.message}"
+                    experienceList.clear()
+                    experienceList.addAll(user.experience)
+                    adapter.notifyDataSetChanged()
+                    binding.replaceText.visibility = if (experienceList.isEmpty()) View.VISIBLE else View.GONE
                 }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                binding.pgBar.visibility = View.GONE
+            }
+        })
+    }
+
+    /**
+     * Helper to load images from Appwrite/Web without using Glide
+     */
+    private fun loadImageFromUrl(imageUrl: String, imageView: ImageView) {
+        val executor = Executors.newSingleThreadExecutor()
+        val handler = Handler(Looper.getMainLooper())
+
+        executor.execute {
+            try {
+                val `in` = URL(imageUrl).openStream()
+                val bitmap = BitmapFactory.decodeStream(`in`)
+
+                handler.post {
+                    imageView.setImageBitmap(bitmap)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                handler.post {
+                    imageView.setImageResource(R.drawable.profile3d)
+                }
+            }
         }
     }
 
-    fun showExperienceDialog(onSave: (Experience) -> Unit) {
-        val builder = AlertDialog.Builder(requireContext())
-        val inflater = LayoutInflater.from(requireContext())
-        val dialogView = inflater.inflate(R.layout.dialog_experience_input, null)
+    private fun showEditProfileDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_profile, null)
+        val etName = dialogView.findViewById<TextInputEditText>(R.id.etName)
+        val etHeadline = dialogView.findViewById<TextInputEditText>(R.id.etHeadline)
+        val etLocation = dialogView.findViewById<TextInputEditText>(R.id.etLocation)
+        val etAbout = dialogView.findViewById<TextInputEditText>(R.id.etAbout)
 
-        builder.setView(dialogView)
+        currentUser?.let {
+            etName.setText(it.name)
+            etHeadline.setText(it.headline)
+            etLocation.setText(it.location)
+            etAbout.setText(it.about)
+        }
 
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Edit Profile")
+            .setView(dialogView)
+            .setPositiveButton("Update") { _, _ ->
+                val updates = hashMapOf<String, Any>(
+                    "name" to etName.text.toString(),
+                    "headline" to etHeadline.text.toString(),
+                    "location" to etLocation.text.toString(),
+                    "about" to etAbout.text.toString()
+                )
+                dbRef.child(auth.currentUser?.uid!!).updateChildren(updates)
+                    .addOnSuccessListener { Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show() }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun uploadFile(uri: Uri, extension: String, isProfileImage: Boolean) {
+        binding.pgBar.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            try {
+                val downloadUrl = appwriteManager.uploadImageFromUri(uri)
+                val updateKey = if (isProfileImage) "profileImageUrl" else "resumeUrl"
+
+                dbRef.child(auth.currentUser?.uid!!).child(updateKey).setValue(downloadUrl)
+                    .addOnSuccessListener {
+                        binding.pgBar.visibility = View.GONE
+                        Toast.makeText(requireContext(), "Upload Successful", Toast.LENGTH_SHORT).show()
+                    }
+            } catch (e: Exception) {
+                binding.pgBar.visibility = View.GONE
+                Toast.makeText(requireContext(), "Upload Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun saveExperienceToDb(experience: Experience) {
+        val uid = auth.currentUser?.uid ?: return
+        experienceList.add(experience)
+        dbRef.child(uid).child("experience").setValue(experienceList)
+    }
+
+    private fun showExperienceDialog(onSave: (Experience) -> Unit) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_experience_input, null)
+        val builder = AlertDialog.Builder(requireContext()).setView(dialogView)
         val dialog = builder.create()
-        dialog.setCancelable(false)
 
-        dialog.setOnShowListener {
-            val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
-            val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
-            val etTitle = dialogView.findViewById<EditText>(R.id.etTitle)
-            val etDescription = dialogView.findViewById<EditText>(R.id.etDescription)
+        val etTitle = dialogView.findViewById<EditText>(R.id.etTitle)
+        val etCompany = dialogView.findViewById<EditText>(R.id.etCompany)
+        val etStartDate = dialogView.findViewById<EditText>(R.id.etStartDate)
+        val etEndDate = dialogView.findViewById<EditText>(R.id.etEndDate)
+        val cbCurrent = dialogView.findViewById<CheckBox>(R.id.cbIsCurrent)
+        val etDesc = dialogView.findViewById<EditText>(R.id.etDescription)
+        val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
 
-            btnSave.setOnClickListener {
-                val title = etTitle.text.toString().trim()
-                val desc = etDescription.text.toString().trim()
+        cbCurrent.setOnCheckedChangeListener { _, isChecked ->
+            etEndDate.isEnabled = !isChecked
+            if (isChecked) etEndDate.setText("Present") else etEndDate.setText("")
+        }
 
-                if (title.isEmpty()) {
-                    etTitle.error = "Title required"
-                    return@setOnClickListener
-                }
+        btnSave.setOnClickListener {
+            val title = etTitle.text.toString().trim()
+            val company = etCompany.text.toString().trim()
 
-                if (desc.isEmpty()) {
-                    etDescription.error = "Description required"
-                    return@setOnClickListener
-                }
-
-                val experience = Experience(title = title, description = desc)
+            if (title.isNotEmpty() && company.isNotEmpty()) {
+                val experience = Experience(
+                    id = UUID.randomUUID().toString(),
+                    title = title,
+                    companyName = company,
+                    startDate = etStartDate.text.toString(),
+                    endDate = etEndDate.text.toString(),
+                    isCurrentRole = cbCurrent.isChecked,
+                    description = etDesc.text.toString()
+                )
                 onSave(experience)
                 dialog.dismiss()
             }
-
-            btnCancel.setOnClickListener {
-                dialog.dismiss()
-            }
         }
-
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
     }
 
+    override fun onItemClick(position: Int) {
+        // Implement edit/view logic for experience if needed
+    }
 
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment ProfileFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ProfileFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onDeleteClick(position: Int) {
     }
 }

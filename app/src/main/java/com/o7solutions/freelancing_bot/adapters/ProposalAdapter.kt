@@ -1,50 +1,46 @@
 package com.o7solutions.freelancing_bot.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.data_classes.Proposal
+import com.o7solutions.freelancing_bot.databinding.ItemProposalBinding
 import com.o7solutions.freelancing_bot.utils.Functions
-import java.util.*
 
-class ProposalAdapter(private val list: ArrayList<Proposal>,val onClick: OnClick) :
-    RecyclerView.Adapter<ProposalAdapter.ProposalViewHolder>() {
+class ProposalAdapter(
+    private var list: List<Proposal>,
+    private val onItemClick: (Proposal) -> Unit // Add this
+) : RecyclerView.Adapter<ProposalAdapter.ViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProposalViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_proposal, parent, false)
-        return ProposalViewHolder(view)
+    class ViewHolder(val binding: ItemProposalBinding) : RecyclerView.ViewHolder(binding.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val binding = ItemProposalBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: ProposalViewHolder, position: Int) {
-      holder.apply {
-          description?.text = list[position].description
-          time?.text = Functions.formatDateTime(list[position].timestamp)
-          userName?.text = list[position].userId
-          forJob?.text = "For:${list[position].forJob}"
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val proposal = list[position]
+        holder.binding.apply {
+            textApplicantName.text = proposal.applicantName
+            textCoverLetter.text = proposal.coverLetter
+            textTimestamp.text = Functions.formatDate(proposal.timestamp)
 
-          itemView.setOnClickListener {
-              onClick.visit(position)
-          }
-      }
+            textStatus.text = when(proposal.status) {
+                0 -> "Applied"
+                1 -> "Reviewed"
+                2 -> "Shortlisted"
+                else -> "Rejected"
+            }
+
+            root.setOnClickListener { onItemClick(proposal) } // Set click listener
+        }
     }
 
-    override fun getItemCount(): Int = list.size
+    override fun getItemCount() = list.size
 
-    inner class ProposalViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var description: TextView? = itemView.findViewById<TextView>(R.id.tvDescription)
-        var time: TextView? = itemView.findViewById<TextView>(R.id.tvTimestamp)
-        var userName: TextView? = itemView.findViewById<TextView>(R.id.tvUserEmail)
-        var forJob : TextView? = itemView.findViewById<TextView>(R.id.tvFor)
-
-
-    }
-
-    interface OnClick {
-
-        fun visit(position: Int)
+    fun updateList(newList: List<Proposal>) {
+        list = newList
+        notifyDataSetChanged()
     }
 }

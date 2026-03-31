@@ -5,184 +5,132 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
+import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.data_classes.Proposal
 import com.o7solutions.freelancing_bot.databinding.FragmentViewJobBinding
 import com.o7solutions.freelancing_bot.utils.Constants
 import com.o7solutions.freelancing_bot.utils.Functions
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [ViewJobFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class ViewJobFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+
     private lateinit var binding: FragmentViewJobBinding
-    private lateinit var db : FirebaseFirestore
-    private var auth = FirebaseAuth.getInstance()
-    var userId = ""
-    var title = ""
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseDatabase.getInstance()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
-
-
+    private var posterId = ""
+    private var jobTitle = ""
+    private var jobId = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-//        return inflater.inflate(R.layout.fragment_view_job, container, false)
-
-        binding = FragmentViewJobBinding.inflate(layoutInflater)
+    ): View {
+        binding = FragmentViewJobBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        db = FirebaseFirestore.getInstance()
-
         binding.toolbarView.setNavigationOnClickListener {
             findNavController().popBackStack()
         }
-        title = arguments?.getString("title") ?: ""
-        val description = arguments?.getString("description") ?: ""
-        val cost = arguments?.getString("cost") ?: ""
-        val deadline = arguments?.getString("deadline") ?: ""
-        userId = arguments?.getString("userId") ?: ""
-        val timestamp = arguments?.getLong("timestamp") ?: 0L
 
-        // Bind the data to views
-        binding.textJobTitle.text = title
-        binding.textJobDescription.text = description
-        binding.textJobCost.text = cost
-        binding.textJobDeadline.text = deadline
-        binding.textJobUserId.text = userId
-        binding.textJobTimestamp.text = Functions.formatDate(timestamp)
+        // Retrieve LinkedIn-style parameters from Bundle
+        arguments?.let { bundle ->
+            jobId = bundle.getString("jobId") ?: ""
+            jobTitle = bundle.getString("title") ?: ""
+            posterId = bundle.getString("posterId") ?: ""
 
+            binding.apply {
+                textJobTitle.text = jobTitle
+                textJobCompany.text = bundle.getString("company")
+                textJobLocation.text = bundle.getString("location")
+                textJobType.text = bundle.getString("jobType")
+                textJobSalary.text = bundle.getString("salary")
+                textJobDescription.text = bundle.getString("description")
 
-        val userType = requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
-            .getInt("userType", -1)
-        Log.d("Home Fragment", userType.toString())
-
-        if (userType == 1) {
-            binding.sendProposal.visibility = View.VISIBLE
-        } else if (userType == 0) {
-            binding.sendProposal.visibility = View.GONE
-        }
-        binding.sendProposal.setOnClickListener {
-
-            showAlertForProposal(requireContext())
-        }
-
-
-
-    }
-
-
-
-    private fun showAlertForProposal(context: Context) {
-        val builder = AlertDialog.Builder(context)
-
-        // Set the title of the dialog
-        builder.setTitle("Enter Your Message")
-
-        // Create a LinearLayout to hold the EditText (optional, but good for padding)
-        val container = LinearLayout(context)
-        container.orientation = LinearLayout.VERTICAL
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-
-        container.layoutParams = params
-
-        val input = EditText(context)
-        input.hint = "Type your message here..."
-        input.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        container.addView(input)
-
-        builder.setView(container)
-
-        builder.setPositiveButton("Send") { dialog, which ->
-            val message = input.text.toString()
-            if (message.isNotBlank()) {
-
-                val proposalData = Proposal(auth.currentUser!!.email.toString(),message, System.currentTimeMillis(), forJob = title )
-
-                db.collection(Constants.proposalCol).document(userId)
-                    .collection(userId).document().set(proposalData)
-                    .addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Data added successfully!", Toast.LENGTH_SHORT).show()
-                        findNavController().popBackStack()
-                    }
-                    .addOnFailureListener { e->
-                        Functions.showAlert("Unable to send proposal: $e",requireContext())
-                    }
-
-            } else {
-                Toast.makeText(context, "Message is empty!", Toast.LENGTH_SHORT).show()
+                val timestamp = bundle.getLong("timestamp")
+                textJobTimestamp.text = Functions.formatDate(timestamp)
             }
-            dialog.dismiss() // Dismiss the dialog after action
         }
 
-        // Set the negative button (Cancel)
-        builder.setNegativeButton("Cancel") { dialog, which ->
-            Toast.makeText(context, "Operation Cancelled", Toast.LENGTH_SHORT).show()
-            dialog.cancel() // Dismiss the dialog
-        }
+        // Role-based visibility for the "Apply" button
+        val sharedPref = requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
+        val userType = sharedPref.getInt("userType", -1)
 
-        val dialog = builder.create()
-        dialog.show()
+        // 1 is Job Seeker (can apply), 0 is Employer (cannot apply to own job)
+        binding.btnApply.visibility = if (userType == 1) View.VISIBLE else View.GONE
+
+        binding.btnApply.setOnClickListener {
+            showApplicationDialog(requireContext())
+        }
     }
 
+    private fun showApplicationDialog(context: Context) {
+        val builder = AlertDialog.Builder(context)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_apply_job, null)
 
+        val etName = dialogView.findViewById<EditText>(R.id.etName)
+        val etCoverLetter = dialogView.findViewById<EditText>(R.id.etCoverLetter)
+        val etResumeUrl = dialogView.findViewById<EditText>(R.id.etResumeUrl)
 
+        builder.setView(dialogView)
+        builder.setTitle("Apply for $jobTitle")
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment ViewJobFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ViewJobFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+        builder.setPositiveButton("Submit") { dialog, _ ->
+            val name = etName.text.toString().trim()
+            val coverLetter = etCoverLetter.text.toString().trim()
+            val resume = etResumeUrl.text.toString().trim()
+
+            if (name.isNotEmpty() && coverLetter.isNotEmpty()) {
+                sendApplication(name, coverLetter, resume)
+            } else {
+                Toast.makeText(context, "Please fill in required fields", Toast.LENGTH_SHORT).show()
+            }
+            dialog.dismiss()
+        }
+
+        builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+        builder.show()
+    }
+
+    private fun sendApplication(name: String, message: String, resume: String) {
+        val currentUserId = auth.currentUser?.uid ?: return
+
+        // Path: Proposals -> RecruiterUID -> UniqueProposalID
+        val applicationRef = db.getReference(Constants.proposalCol).push()
+        val applicationId = applicationRef.key ?: System.currentTimeMillis().toString()
+
+        val applicationData = Proposal(
+            applicationId = applicationId,
+            jobId = jobId,
+            applicantId = currentUserId,
+            applicantName = name,
+            coverLetter = message,
+            resumeUrl = resume,
+            timestamp = System.currentTimeMillis(),
+            status = 0,
+            posterId = posterId
+        )
+
+        applicationRef.setValue(applicationData)
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Application sent to $jobTitle!", Toast.LENGTH_SHORT).show()
+                findNavController().popBackStack()
+            }
+            .addOnFailureListener { e ->
+                Functions.showAlert("Error: ${e.localizedMessage}", requireContext())
             }
     }
 }
