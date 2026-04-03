@@ -52,7 +52,10 @@ class MainActivity : AppCompatActivity() {
         if (userType == 1) {
             navView.menu.findItem(R.id.navigation_dashboard).isVisible = false
 
+        } else {
+            navView.menu.findItem(R.id.jobHistoryFragment).isVisible = false
         }
+        
 
     }
 }

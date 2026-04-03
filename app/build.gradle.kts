@@ -67,4 +67,6 @@ dependencies {
     // Cloud Firestore
     implementation("com.google.firebase:firebase-firestore-ktx") // For Kotlin
     implementation("io.appwrite:sdk-for-android:5.1.0")
+
+    implementation("org.dhatim:fastexcel:0.15.3")
 }

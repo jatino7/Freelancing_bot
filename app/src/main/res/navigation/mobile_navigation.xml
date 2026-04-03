@@ -49,4 +49,9 @@
         android:id="@+id/viewProposalFragment"
         android:name="com.o7solutions.freelancing_bot.ui.dashboard.ViewProposalFragment"
         android:label="ViewProposalFragment" />
+    <fragment
+        android:id="@+id/jobHistoryFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.JobHistoryFragment"
+        android:label="fragment_job_history"
+        tools:layout="@layout/fragment_job_history" />
 </navigation>
