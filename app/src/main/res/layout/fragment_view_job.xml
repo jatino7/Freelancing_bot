@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/primary"
+        android:visibility="gone"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/back"
         app:navigationIconTint="@color/white"
@@ -168,16 +169,32 @@
         android:layout_height="wrap_content"
         android:background="@color/white"
         android:elevation="12dp"
+        android:orientation="horizontal"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_apply"
-            android:layout_width="match_parent"
+            android:id="@+id/btn_delete"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
             android:layout_height="56dp"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:visibility="gone"
+            android:text="Delete"
+            android:textColor="@android:color/holo_red_dark"
+            app:cornerRadius="28dp"
+            app:strokeColor="@android:color/holo_red_dark" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_apply"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1.5"
             android:text="Easy Apply"
             android:textSize="16sp"
             app:cornerRadius="28dp" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

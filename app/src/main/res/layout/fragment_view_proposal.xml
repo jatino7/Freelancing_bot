@@ -1,12 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F3F4F9">
+    android:background="#F8F9FD">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
         app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
@@ -14,45 +17,49 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
+            app:navigationIcon="@drawable/back"
+            app:navigationIconTint="@color/white"
             app:title="Application Review"
-            app:titleTextColor="@color/white"
-            app:navigationIconTint="@color/black" />
+            app:titleCentered="true"
+            android:visibility="gone"
+            app:titleTextColor="@color/white" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="100dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="#E0E0E0">
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:background="#FAFAFA">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="FOR THE POSITION OF"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:textColor="#757575"
-                        android:letterSpacing="0.1"/>
+                        android:letterSpacing="0.1"
+                        android:text="JOB POSTING"
+                        android:textColor="#9E9E9E"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvJobTitle"
@@ -60,49 +67,51 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:textColor="@color/black"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        tools:text="Senior UX Designer" />
 
                     <TextView
                         android:id="@+id/tvJobCompany"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/purple_500"
-                        android:textStyle="bold" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="#EEEEEE"/>
+                        android:textColor="@color/primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="O7 Solutions" />
 
                     <TextView
                         android:id="@+id/tvJobDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:ellipsize="end"
+                        android:lineSpacingExtra="4dp"
+                        android:maxLines="2"
                         android:textColor="#616161"
                         android:textSize="14sp"
-                        android:maxLines="3"
-                        android:ellipsize="end" />
+                        tools:text="We are looking for a creative designer to join our fast-growing team..." />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
-                android:text="APPLICANT DOSSIER"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="12dp"
+                android:letterSpacing="0.1"
+                android:text="APPLICANT DETAILS"
+                android:textColor="#757575"
                 android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="#9E9E9E"
-                android:letterSpacing="0.1"/>
+                android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -118,18 +127,20 @@
 
                         <com.google.android.material.imageview.ShapeableImageView
                             android:id="@+id/imgApplicant"
-                            android:layout_width="80dp"
-                            android:layout_height="80dp"
+                            android:layout_width="70dp"
+                            android:layout_height="70dp"
+                            android:background="#F0F0F0"
                             android:scaleType="centerCrop"
                             app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
-                            android:src="@drawable/profile3d"
-                            app:strokeWidth="2dp"
-                            app:strokeColor="@color/purple_500"/>
+                            app:strokeColor="#E0E0E0"
+                            app:strokeWidth="1dp"
+                            tools:src="@tools:sample/avatars" />
 
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
+                            android:layout_weight="1"
                             android:orientation="vertical">
 
                             <TextView
@@ -137,54 +148,62 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/black"
-                                android:textSize="22sp"
-                                android:textStyle="bold" />
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                tools:text="John Doe" />
 
                             <TextView
                                 android:id="@+id/tvApplicantHeadline"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/purple_500"
-                                android:textSize="14sp"
-                                android:textStyle="italic" />
+                                android:textColor="@color/primary"
+                                android:textSize="13sp"
+                                tools:text="Mobile App Enthusiast" />
                         </LinearLayout>
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="20dp"
+                        android:background="#F0F0F0" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="24dp"
-                        android:text="Introduction"
-                        android:textStyle="bold"
-                        android:textColor="@color/black"/>
+                        android:text="Cover Letter"
+                        android:textColor="@color/black"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvCoverLetter"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textColor="#424242"
-                        android:lineSpacingMultiplier="1.2"/>
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingMultiplier="1.3"
+                        android:textColor="#555555"
+                        tools:text="I am writing to express my interest in the position..." />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnViewResume"
-                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="match_parent"
-                        android:layout_height="55dp"
+                        android:layout_height="56dp"
                         android:layout_marginTop="20dp"
-                        android:text="Open Full Portfolio / Resume"
-                        android:backgroundTint="#F3E5F5"
-                        android:textColor="@color/purple_500"
-                        app:cornerRadius="8dp" />
+                        android:text="View Resume / Portfolio"
+                        android:textAllCaps="false"
+                        app:cornerRadius="12dp"
+                        app:iconGravity="textStart" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="28dp"
-                        android:text="Work Experience"
-                        android:textStyle="bold"
+                        android:layout_marginTop="24dp"
+                        android:text="Experience"
                         android:textColor="@color/black"
-                        android:textSize="16sp"/>
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
                     <LinearLayout
                         android:id="@+id/experienceContainer"
@@ -192,46 +211,56 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:orientation="vertical" />
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:layout_marginBottom="40dp"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btnReject"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_weight="1"
-                    android:text="Reject"
-                    android:visibility="gone"
-                    android:textColor="#E53935"
-                    app:strokeColor="#E53935"
-                    app:cornerRadius="12dp" />
-
-                <Button
-                    android:id="@+id/btnShortlist"
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:text="Shortlist"
-                    android:visibility="gone"
-                    android:backgroundTint="@color/purple_500"
-                    app:cornerRadius="12dp" />
+                android:layout_marginTop="24dp"
+                android:orientation="vertical">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chat"
-                    android:text="Message User"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="Message Applicant"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:iconGravity="textStart" />
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    />
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReject"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:text="Reject"
+                        android:textColor="#D32F2F"
+                        android:visibility="gone"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="#D32F2F" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnShortlist"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="#2E7D32"
+                        android:text="Shortlist"
+                        android:visibility="gone"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>

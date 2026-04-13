@@ -9,6 +9,7 @@
         android:layout_width="match_parent"
         android:background="@color/primary"
         app:titleTextColor="@color/white"
+        android:visibility="gone"
         app:title="Dashboard"
         android:layout_height="wrap_content"
         />

@@ -4,6 +4,7 @@ import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.adapters.HomeAdapter
@@ -101,7 +103,24 @@ class HomeFragment : Fragment(), HomeAdapter.ItemClick {
                 if (snapshot.exists()) {
                     for (jobSnapshot in snapshot.children) {
                         val item = jobSnapshot.getValue(job::class.java)
-                        item?.let { fullList.add(it) }
+                        item?.let {
+                            val userType = requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
+                                .getInt("userType", -1)
+                            Log.d("Home Fragment", userType.toString())
+
+
+                            if (userType == 0 && item.posterId == FirebaseAuth.getInstance().uid) {
+                                fullList.add(it)
+
+                            } else if(userType == 1) {
+
+                                fullList.add(it)
+
+                            }
+
+
+
+                        }
                     }
                     fullList.sortByDescending { it.timestamp }
                 }

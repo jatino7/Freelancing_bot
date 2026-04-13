@@ -2,16 +2,14 @@ package com.o7solutions.freelancing_bot.auth
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Toast
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.o7solutions.freelancing_bot.Admin.AdminActivity
 import com.o7solutions.freelancing_bot.MainActivity
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.data_classes.User
@@ -21,8 +19,8 @@ import com.o7solutions.freelancing_bot.utils.Constants
 class SignupActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySignupBinding
-    private var role = 0
-    private lateinit var dbRef: DatabaseReference // Changed from Firestore to DatabaseReference
+    private var role = 1 // Default to Job Seeker (1)
+    private lateinit var dbRef: DatabaseReference
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,34 +29,44 @@ class SignupActivity : AppCompatActivity() {
         binding = ActivitySignupBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 1. Retrieve the role from Intent (sent from Onboarding)
+        // If no value is passed, it defaults to 1 (Job Seeker)
+        role = intent.getIntExtra("USER_ROLE", 1)
+
+        // UI Feedback: Update a TextView or Title to show which role they are signing up for
+        updateUIBasedOnRole()
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Initialize Realtime Database and Auth
         dbRef = FirebaseDatabase.getInstance().getReference(Constants.userCol)
         auth = FirebaseAuth.getInstance()
 
-        val roles = listOf("Employer", "Job Seeker")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, roles)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.roleSpinner.adapter = adapter
-
-        binding.roleSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val selectedRole = parent?.getItemAtPosition(position).toString()
-                // Fixed: Matching the logic to the 'roles' list strings
-                role = if (selectedRole == "Employer") 0 else 1
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+        binding.loginBTN.setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
         }
 
         binding.createAccountBTN.setOnClickListener {
             createUser()
         }
+    }
+
+    private fun updateUIBasedOnRole() {
+        val roleName = when (role) {
+            0 -> "Employer"
+            1 -> "Job Seeker"
+            2 -> "Admin"
+            else -> "User"
+        }
+        // Assuming you have a heading or can change the button text
+        binding.createAccountBTN.text = "Register as $roleName"
+
+        // If you still have the spinner in XML, you might want to hide it
+        // or set its selection so it matches the intent data
+        // binding.roleSpinner.visibility = View.GONE
     }
 
     private fun createUser() {
@@ -67,7 +75,6 @@ class SignupActivity : AppCompatActivity() {
         val password = binding.passET.text.toString().trim()
         val description = binding.descriptionET.text.toString().trim()
 
-        // Validation logic
         if (name.isEmpty() || email.isEmpty() || password.length < 6) {
             Toast.makeText(this, "Please fill all fields correctly", Toast.LENGTH_SHORT).show()
             return
@@ -77,6 +84,7 @@ class SignupActivity : AppCompatActivity() {
             .addOnSuccessListener { authResult ->
                 val uid = authResult.user?.uid ?: ""
 
+                // 2. The 'role' variable here is already set from the Intent
                 val newUser = User(
                     id = uid,
                     name = name,
@@ -92,16 +100,23 @@ class SignupActivity : AppCompatActivity() {
                     connectionsCount = 0
                 )
 
-                // Realtime Database save logic
                 dbRef.child(uid).setValue(newUser)
                     .addOnSuccessListener {
-                        Toast.makeText(this, "Welcome to the network!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
 
+                        // 3. Save to SharedPrefs for session management
                         val sharedPref = getSharedPreferences(Constants.userKey, MODE_PRIVATE)
                         sharedPref.edit().putInt("userType", role).apply()
 
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish()
+
+                        if(role != 2) {
+                            startActivity(Intent(this, MainActivity::class.java))
+                            finish()
+                        } else {
+                            startActivity(Intent(this, AdminActivity::class.java))
+                            finish()
+                        }
+
                     }
                     .addOnFailureListener {
                         Toast.makeText(this, "Database Error: ${it.message}", Toast.LENGTH_LONG).show()

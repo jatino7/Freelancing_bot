@@ -4,12 +4,10 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -65,16 +63,65 @@ class ViewJobFragment : Fragment() {
             }
         }
 
-        // Role-based visibility for the "Apply" button
+        // Role-based visibility
         val sharedPref = requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
         val userType = sharedPref.getInt("userType", -1)
 
-        // 1 is Job Seeker (can apply), 0 is Employer (cannot apply to own job)
-        binding.btnApply.visibility = if (userType == 1) View.VISIBLE else View.GONE
+        // 1 is Job Seeker (can apply), 0 is Employer (can delete)
+        if (userType == 1) {
+            binding.btnApply.visibility = View.VISIBLE
+            binding.btnDelete.visibility = View.GONE
+        } else if (userType == 0) {
+            binding.btnApply.visibility = View.GONE
+
+            if(posterId == FirebaseAuth.getInstance().currentUser?.uid) {
+                binding.btnDelete.visibility = View.VISIBLE
+
+            }
+        } else {
+            binding.btnApply.visibility = View.GONE
+            binding.btnDelete.visibility = View.GONE
+        }
 
         binding.btnApply.setOnClickListener {
             showApplicationDialog(requireContext())
         }
+
+        binding.btnDelete.setOnClickListener {
+            showDeleteConfirmationDialog()
+        }
+    }
+
+    private fun showDeleteConfirmationDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Job")
+            .setMessage("Are you sure you want to delete this job? This action cannot be undone.")
+            .setPositiveButton("Delete") { dialog, _ ->
+                deleteJob()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun deleteJob() {
+        if (jobId.isEmpty()) {
+            Toast.makeText(requireContext(), "Error: Job ID not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Path should match your Firebase Database structure for Jobs
+        db.getReference("Jobs").child(jobId)
+            .removeValue()
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Job deleted successfully", Toast.LENGTH_SHORT).show()
+                findNavController().popBackStack()
+            }
+            .addOnFailureListener { e ->
+                Functions.showAlert("Failed to delete: ${e.localizedMessage}", requireContext())
+            }
     }
 
     private fun showApplicationDialog(context: Context) {
@@ -108,7 +155,6 @@ class ViewJobFragment : Fragment() {
     private fun sendApplication(name: String, message: String, resume: String) {
         val currentUserId = auth.currentUser?.uid ?: return
 
-        // Path: Proposals -> RecruiterUID -> UniqueProposalID
         val applicationRef = db.getReference(Constants.proposalCol).push()
         val applicationId = applicationRef.key ?: System.currentTimeMillis().toString()
 

@@ -24,6 +24,7 @@
         android:layout_height="wrap_content"
         android:background="@color/primary"
         app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"
         app:navigationIcon="@drawable/back"
         app:navigationIconTint="@color/white"
         app:title="Post a Job"

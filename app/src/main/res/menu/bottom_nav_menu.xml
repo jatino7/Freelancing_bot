@@ -7,6 +7,17 @@
         android:title="@string/title_home" />
 
     <item
+        android:id="@+id/companyFragment"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Add Company" />
+
+
+    <item
+        android:id="@+id/jobsFragment"
+        android:icon="@drawable/work"
+        android:title="All Jobs" />
+
+    <item
         android:id="@+id/navigation_dashboard"
         android:icon="@drawable/ic_dashboard_black_24dp"
         android:title="@string/title_dashboard" />

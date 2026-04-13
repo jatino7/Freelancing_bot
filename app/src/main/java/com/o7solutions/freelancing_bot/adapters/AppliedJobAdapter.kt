@@ -29,15 +29,22 @@ class AppliedJobAdapter(
         val jobInfo = jobMap[proposal.jobId]
 
         holder.binding.apply {
-            // Set Job Details
             tvJobTitle.text = jobInfo?.title ?: "Unknown Position"
             tvCompanyName.text = jobInfo?.companyName ?: "Unknown Company"
 
-            // Set Date
+            // Show Location and Job Type combined
+            val location = jobInfo?.location ?: "Location N/A"
+            val type = jobInfo?.jobType ?: "Type N/A"
+            tvJobMeta.text = "$location • $type"
+
+            // Show Salary
+            tvSalary.text = jobInfo?.salaryRange ?: "Salary not disclosed"
+
+            // Format Date
             val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
             tvAppliedDate.text = "Applied on: ${sdf.format(Date(proposal.timestamp))}"
 
-            // Handle Status UI
+            // Status Badge Logic (stays the same but ensures colors are clear)
             val (statusText, colorRes) = when (proposal.status) {
                 0 -> "Applied" to android.R.color.holo_blue_dark
                 1 -> "Reviewed" to android.R.color.holo_orange_dark
@@ -52,6 +59,5 @@ class AppliedJobAdapter(
             root.setOnClickListener { onClick(proposal) }
         }
     }
-
     override fun getItemCount(): Int = list.size
 }

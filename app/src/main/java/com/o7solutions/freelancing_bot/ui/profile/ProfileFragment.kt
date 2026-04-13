@@ -3,7 +3,6 @@ package com.o7solutions.freelancing_bot.ui.profile
 import android.app.AlertDialog
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -21,17 +20,15 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.o7solutions.freelancing_bot.OnBoardingActivity
 import com.o7solutions.freelancing_bot.R
 import com.o7solutions.freelancing_bot.adapters.ExperienceAdapter
-import com.o7solutions.freelancing_bot.auth.LoginActivity
 import com.o7solutions.freelancing_bot.data_classes.Experience
 import com.o7solutions.freelancing_bot.data_classes.User
 import com.o7solutions.freelancing_bot.databinding.FragmentProfileBinding
 import com.o7solutions.freelancing_bot.utils.AppwriteManager
 import com.o7solutions.freelancing_bot.utils.Constants
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.net.URL
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -69,6 +66,16 @@ class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
 
         setupRecyclerView()
 
+
+        val sharedPref = requireActivity().getSharedPreferences(Constants.userKey, MODE_PRIVATE)
+        val userRole = sharedPref.getInt("userType", -1)
+
+        if(userRole == 0) {
+            binding.resumeCard.visibility = View.GONE
+            binding.experienceCard.visibility = View.GONE
+        }
+
+
         binding.apply {
             swipeRefresh.setOnRefreshListener {
                 getUserData()
@@ -77,16 +84,46 @@ class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
 
             editProfileBtn.setOnClickListener { showEditProfileDialog() }
             profileIV.setOnClickListener { imagePicker.launch("image/*") }
+
             uploadResumeBtn.setOnClickListener { resumePicker.launch("application/pdf") }
 
             addExp.setOnClickListener {
                 showExperienceDialog { newExp -> saveExperienceToDb(newExp) }
             }
 
+            // View Resume Logic
+            binding.view.setOnClickListener {
+                val resumeUrl = currentUser?.resumeUrl
+                if (!resumeUrl.isNullOrEmpty()) {
+                    try {
+                        // Using Google Docs Viewer ensures the PDF opens in the browser
+                        // even if the user doesn't have a dedicated PDF app.
+                        val viewerUrl = "https://docs.google.com/viewer?url=$resumeUrl"
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = Uri.parse(viewerUrl)
+
+                        // Adding flags ensures compatibility with newer Android versions
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        // Fallback: If Google Docs viewer fails, try opening raw URL
+                        try {
+                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(resumeUrl))
+                            startActivity(browserIntent)
+                        } catch (ex: Exception) {
+                            Toast.makeText(requireContext(), "No browser or PDF app found", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "Please add resume first", Toast.LENGTH_SHORT).show()
+                }
+            }
+
             logOutBtn.setOnClickListener {
                 auth.signOut()
                 requireContext().getSharedPreferences(Constants.userKey, MODE_PRIVATE).edit().clear().apply()
-                startActivity(Intent(requireActivity(), LoginActivity::class.java))
+                startActivity(Intent(requireActivity(), OnBoardingActivity::class.java))
                 requireActivity().finish()
             }
         }
@@ -116,7 +153,6 @@ class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
                     binding.locationTV.text = user.location.ifEmpty { "Location not set" }
                     binding.aboutTV.text = user.about.ifEmpty { "No bio added yet." }
 
-                    // Manually load image without Glide
                     if (user.profileImageUrl.isNotEmpty()) {
                         loadImageFromUrl(user.profileImageUrl, binding.profileIV)
                     }
@@ -136,9 +172,6 @@ class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
         })
     }
 
-    /**
-     * Helper to load images from Appwrite/Web without using Glide
-     */
     private fun loadImageFromUrl(imageUrl: String, imageView: ImageView) {
         val executor = Executors.newSingleThreadExecutor()
         val handler = Handler(Looper.getMainLooper())
@@ -147,7 +180,6 @@ class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
             try {
                 val `in` = URL(imageUrl).openStream()
                 val bitmap = BitmapFactory.decodeStream(`in`)
-
                 handler.post {
                     imageView.setImageBitmap(bitmap)
                 }
@@ -255,10 +287,7 @@ class ProfileFragment : Fragment(), ExperienceAdapter.ItemClick {
         dialog.show()
     }
 
-    override fun onItemClick(position: Int) {
-        // Implement edit/view logic for experience if needed
-    }
+    override fun onItemClick(position: Int) {}
 
-    override fun onDeleteClick(position: Int) {
-    }
+    override fun onDeleteClick(position: Int) {}
 }

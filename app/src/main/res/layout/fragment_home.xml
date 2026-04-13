@@ -9,6 +9,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
         android:layout_width="match_parent"
+        android:visibility="gone"
         android:layout_height="wrap_content"
         android:background="@color/primary"
         app:layout_constraintTop_toTopOf="parent">
@@ -18,6 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:title="Home"
+            android:visibility="gone"
             app:titleTextColor="@color/white" />
 
         <com.google.android.material.card.MaterialCardView
@@ -34,6 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
                 android:background="@color/white"
+                android:visibility="gone"
                 android:drawableStart="@android:drawable/ic_menu_search"
                 android:drawablePadding="12dp"
                 android:hint="Search jobs by title or company..."

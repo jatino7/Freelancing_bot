@@ -35,23 +35,32 @@
     <fragment
         android:id="@+id/viewJobFragment"
         android:name="com.o7solutions.freelancing_bot.ui.home.ViewJobFragment"
-        android:label="fragment_view_job"
+        android:label="Job Details"
         tools:layout="@layout/fragment_view_job" />
     <fragment
         android:id="@+id/userProfileFragment"
         android:name="com.o7solutions.freelancing_bot.ui.UserProfileFragment"
-        android:label="UserProfileFragment" />
+        android:label="User Profile" />
     <fragment
         android:id="@+id/chatFragment"
         android:name="com.o7solutions.freelancing_bot.ui.notifications.ChatFragment"
-        android:label="ChatFragment" />
+        android:label="Chat Fragment" />
     <fragment
         android:id="@+id/viewProposalFragment"
         android:name="com.o7solutions.freelancing_bot.ui.dashboard.ViewProposalFragment"
-        android:label="ViewProposalFragment" />
+        android:label="View Proposal" />
     <fragment
         android:id="@+id/jobHistoryFragment"
         android:name="com.o7solutions.freelancing_bot.ui.JobHistoryFragment"
-        android:label="fragment_job_history"
+        android:label="Jobs History"
         tools:layout="@layout/fragment_job_history" />
+    <fragment
+        android:id="@+id/jobsFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.JobsFragment"
+        android:label="All Jobs"
+        tools:layout="@layout/fragment_jobs" />
+    <fragment
+        android:id="@+id/companyFragment"
+        android:name="com.o7solutions.freelancing_bot.ui.CompanyFragment"
+        android:label="CompanyFragment" />
 </navigation>
